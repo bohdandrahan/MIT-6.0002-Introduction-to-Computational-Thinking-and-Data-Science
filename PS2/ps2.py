@@ -20,7 +20,12 @@ from graph import Digraph, Node, WeightedEdge
 # represented?
 #
 # Answer:
-#
+
+"""
+Graph's nodes represents buildings of MIT campus
+Graph's edges represent an object that contais such data as source, destination and distances between them
+There are two types of distances: total distance and outdoor distance. It is pretty self-expanatory
+"""
 
 
 # Problem 2b: Implementing load_map
@@ -46,8 +51,53 @@ def load_map(map_filename):
     # TODO
     print("Loading map from file...")
 
-# Problem 2c: Testing load_map
+    digraph = Digraph()
+
+    nodes = remove_duplicates(get_all_nodes_from_map_data(map_filename))
+    edges = get_edges_from_map_data(map_filename)
+
+    for each in nodes:
+        digraph.add_node(each)
+    for each in edges:
+        digraph.add_edge(each)
+
+    return digraph
+
+def get_all_nodes_from_map_data(map_filename):
+    map_data = open(map_filename, 'r', 0)
+    nodes = list()
+    for line in map_data:
+        for each in get_nodes_from_line(line):
+            nodes.append(each)
+    return nodes
+
+def get_nodes_from_line(line):
+    nodes = list()
+    line_listed = line.strip('\n').split(' ')
+    nodes.append(line_listed[0])
+    nodes.append(line_listed[1])
+    return nodes
+
+def remove_duplicates(nodes):
+    new_nodes = list()
+    for each in nodes:
+        if each not in new_nodes:
+            new_nodes.append(each)
+    return new_nodes
+
+def get_edges_from_map_data(map_filename):
+    map_data = open(map_filename, 'r', 0)
+    edges = list()
+    for line in map_data:
+        edges.append(get_egde_from_line(line))
+    return edges
+
+def get_egde_from_line(line):
+    l = line.strip('\n').split(' ')
+    return WeightedEdge(l[0],l[1],l[2],l[3])
+
 # Include the lines used to test load_map below, but comment them out
+#print load_map("test_load_map.txt")
 
 
 #
@@ -59,6 +109,10 @@ def load_map(map_filename):
 #
 # Answer:
 #
+"""
+The goal is to find the shortest path between two nodes.
+The constraint is not to exceed the maximum distance outdoors.
+"""
 
 # Problem 3b: Implement get_best_path
 def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
@@ -96,8 +150,42 @@ def get_best_path(digraph, start, end, path, max_dist_outdoors, best_dist,
         max_dist_outdoors constraints, then return None.
     """
     # TODO
-    pass
+    path = path +  [start]
+    if start not in digraph.get_nodes() and end not in digraph.get_nodes():
+        raise ValueError ('Invalid node')
+    elif start == end:
+        return path
+    else:
+        for each in digraph.get_edges_for_node(start):
+            if each.get_destination() not in path:
+                new_path = get_best_path(digraph, each.destination, end, path, max_dist_outdoors, best_dist, best_path)
+                if new_path != None:
+                    total_dist = get_total_dist(digraph, new_path)
+                    outdoor_dist = get_outdoor_dist(digraph, new_path)
+                    if outdoor_dist <= max_dist_outdoors and total_dist <= best_dist:
+                        best_path = new_path
+                        best_dist = total_dist
+    return best_path
 
+
+
+
+def get_total_dist(digraph, path):
+    dist = 0
+    for i in xrange(len(path) -1):
+        for edge in digraph.edges[path[i]]:
+            if edge.destination == path[i + 1]:
+                dist += edge.get_total_distance()
+    return dist
+
+def get_outdoor_dist(digraph, path):
+    dist = 0
+    for i in xrange(len(path) -1):
+        for edge in digraph.edges[path[i]]:
+            if edge.destination == path[i + 1]:
+                dist += edge.get_outdoor_distance()
+    return dist
+    
 
 # Problem 3c: Implement directed_dfs
 def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
@@ -113,9 +201,7 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
         start: string
             Building number at which to start
         end: string
-            Building number at which to end
-        max_total_dist: int
-            Maximum total distance on a path
+            Building number at which to end max_total_dist: int Maximum total distance on a path
         max_dist_outdoors: int
             Maximum distance spent outdoors on a path
 
@@ -129,7 +215,11 @@ def directed_dfs(digraph, start, end, max_total_dist, max_dist_outdoors):
         max_dist_outdoors constraints, then raises a ValueError.
     """
     # TODO
-    pass
+    best_path = get_best_path(digraph, start, end, [], max_dist_outdoors, max_total_dist, None)
+    if best_path == None:
+        raise ValueError
+    return best_path 
+          
 
 
 # ================================================================

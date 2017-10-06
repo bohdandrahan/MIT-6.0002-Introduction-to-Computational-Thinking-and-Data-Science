@@ -56,8 +56,8 @@ class WeightedEdge(Edge):
     def __init__(self, src, dest, total_distance, outdoor_distance):
         self.source = src
         self.destination = dest
-        self.total_distance = total_distance
-        self.outdoor_distance = outdoor_distance
+        self.total_distance = int(total_distance)
+        self.outdoor_distance = int(outdoor_distance)
 
     def get_total_distance(self):
         return self.total_distance
@@ -106,6 +106,10 @@ class Digraph(object):
         if not (source in self.nodes and destination in self.nodes):
             raise ValueError('node not in grahp')
         add_edge_to_self_egdes(self.edges, edge)
+
+    def get_nodes(self):
+        return self.nodes
+    
 
 def add_edge_to_self_egdes(edges, edge):
     if not edge.get_source() in edges:
