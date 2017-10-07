@@ -233,7 +233,6 @@ class Robot(object):
         self.speed = float(speed)
         self.capacity = capacity
 
-        self.room.clean_tile_at_position(self.position, self.capacity)
 
     def get_robot_position(self):
         """
@@ -282,7 +281,7 @@ class Robot(object):
         else: return True
 
     def set_new_random_direction(self):
-        self.direction = random.randint(0, 360)
+        self.direction = random.uniform(0, 360)
     
 
 # === Problem 2
@@ -423,10 +422,11 @@ class StandardRobot(Robot):
         rotate once to a random new direction, and stay stationary) and clean the dirt on the tile
         by its given capacity. 
         """
-        while self.is_hit():
+        if not self.is_hit():
+            self.position = self.position.get_new_position(self.direction, self.speed)
+            self.room.clean_tile_at_position(self.position, self.capacity)
+        else:
             self.set_new_random_direction()
-        self.position = self.position.get_new_position(self.direction, self.speed)
-        self.room.clean_tile_at_position(self.position, self.capacity)
 
 
 # Uncomment this line to see your implementation of StandardRobot in action!
@@ -473,18 +473,12 @@ class FaultyRobot(Robot):
         """
         if self.gets_faulty():
             self.set_new_random_direction()
-            while self.is_hit():
-                self.set_new_random_direction()
-            self.position = self.position.get_new_position(self.direction, self.speed)
-
         else:
-            while self.is_hit():
+            if not self.is_hit():
+                self.position = self.position.get_new_position(self.direction, self.speed)
+                self.room.clean_tile_at_position(self.position, self.capacity)
+            else:
                 self.set_new_random_direction()
-
-            self.position = self.position.get_new_position(self.direction, self.speed)
-            self.room.clean_tile_at_position(self.position, self.capacity)
-        
-    
 #test_robot_movement(FaultyRobot, EmptyRoom)
 
 # === Problem 5
@@ -545,7 +539,7 @@ def get_average(result):
     summ = 0
     for each in result:
         summ += each
-    return summ/float(len(result) + 1)
+    return summ/float(len(result))
 
 
 #print ('avg time steps: ' + str(run_simulation(1, 1.0, 1, 5, 5, 3, 1.0, 50, StandardRobot)))
@@ -615,5 +609,5 @@ def show_plot_room_shape(title, x_label, y_label):
     pylab.show()
 
 
-#show_plot_compare_strategies('Time to clean 80% of a 20x20 room, for various numbers of robots','Number of robots','Time / steps')
-#show_plot_room_shape('Time to clean 80% of a 300-tile room for various room shapes','Aspect Ratio', 'Time / steps')
+show_plot_compare_strategies('Time to clean 80% of a 20x20 room, for various numbers of robots','Number of robots','Time / steps')
+show_plot_room_shape('Time to clean 80% of a 300-tile room for various room shapes','Aspect Ratio', 'Time / steps')

@@ -1,4 +1,4 @@
-# Test suite for Problem Set 3 (Simulating Robots)
+# Test suite for Problem Set 4 (Simulating Robots)
 # Fall 2016
 
 import sys
