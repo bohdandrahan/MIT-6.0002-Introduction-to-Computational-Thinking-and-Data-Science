@@ -88,7 +88,13 @@ class SimpleBacteria(object):
                 probability
             death_prob (float in [0, 1]): Maximum death probability
         """
-        pass  # TODO
+
+        
+        # TODO
+        self.birth_prob = float(birth_prob)
+        self.death_prob = float(death_prob)
+
+
 
     def is_killed(self):
         """
@@ -99,7 +105,8 @@ class SimpleBacteria(object):
         Returns:
             bool: True with probability self.death_prob, False otherwise.
         """
-        pass  # TODO
+        # TODO
+        return (random.random() <= self.death_prob)
 
     def reproduce(self, pop_density):
         """
@@ -127,7 +134,11 @@ class SimpleBacteria(object):
         Raises:
             NoChildException if this bacteria cell does not reproduce.
         """
-        pass  # TODO
+        # TODO
+        if random.random() <= self.birth_prob*(1 - pop_density):
+            return SimpleBacteria(self.birth_prob, self.death_prob)
+
+        else: NoChildException() 
 
 
 class Patient(object):
@@ -142,7 +153,9 @@ class Patient(object):
             max_pop (int): Maximum possible bacteria population size for
                 this patient
         """
-        pass  # TODO
+        # TODO
+        self.bacteria = list(bacteria)
+        self.max_pop = int(max_pop)
 
     def get_total_pop(self):
         """
@@ -151,7 +164,11 @@ class Patient(object):
         Returns:
             int: The total bacteria population
         """
-        pass  # TODO
+        # TODO
+        return len(self.bacteria)
+    
+    def get_max_pop(self):
+        return self.max_pop
 
     def update(self):
         """
@@ -177,7 +194,45 @@ class Patient(object):
         Returns:
             int: The total bacteria population at the end of the update
         """
-        pass  # TODO
+        # TODO
+
+        #1
+        self.bacteria = self.get_survived_bacteria()
+
+        #2
+        pop_density = self.get_pop_density()
+
+        #3
+        child_bacteria = self.get_child_bacteria(pop_density)
+
+        #4
+        self.bacteria += child_bacteria
+
+        return len(self.bacteria)
+
+        
+
+    def get_survived_bacteria(self):
+
+        survived_bacteria = list()
+        for bacterium in self.bacteria:
+            if not bacterium.is_killed():
+                survived_bacteria.append(bacterium)
+        return survived_bacteria
+
+    def get_pop_density(self):
+        return self.get_total_pop()/float(self.max_pop)
+
+    def get_child_bacteria(self, pop_density):
+        child_bacteria = list()
+        for bacterium in self.bacteria:
+            child = bacterium.reproduce(pop_density)
+            if child is not None:
+                child_bacteria.append(child)
+        return child_bacteria
+
+
+
 
 
 ##########################
@@ -195,8 +250,12 @@ def calc_pop_avg(populations, n):
     Returns:
         float: The average bacteria population size at time step n
     """
-    pass  # TODO
+    # TODO
+    n_population = list()
+    for trial in populations:
+        n_population.append(trial[n])
 
+    return sum(n_population)/float(len(populations))
 
 def simulation_without_antibiotic(num_bacteria,
                                   max_pop,
@@ -231,11 +290,48 @@ def simulation_without_antibiotic(num_bacteria,
         populations (list of lists or 2D array): populations[i][j] is the
             number of bacteria in trial i at time step j
     """
-    pass  # TODO
+    # TODO
+    num_steps = 300
 
+    def create_bacteria():
+        bacteria = list()
+        for i in range(num_bacteria):
+            bacteria.append(SimpleBacteria(birth_prob, death_prob))
+        return bacteria
+
+    def run_trial():
+        """return list of population of each time-step"""
+        bacteria = create_bacteria()
+        patient = Patient(bacteria, max_pop)
+        population = list()
+        for i in range(num_steps):
+            population.append(patient.get_total_pop())
+            patient.update()
+        return population
+
+    populations = list()
+    for trial in range(num_trials):
+        populations.append(run_trial())
+
+    #Plot
+    def get_x_coords():
+        x_coords = list()
+        for i in range(num_steps):
+            x_coords.append(i)
+        return x_coords
+
+    def get_y_coords():
+        y_coords = list()
+        for i in range(num_steps):
+            y_coords.append(calc_pop_avg(populations, i))
+        return y_coords
+
+    make_one_curve_plot(get_x_coords(), get_y_coords(), "time-steps", "Population", "Population over time without antibiotic")
+
+    return populations 
 
 # When you are ready to run the simulation, uncomment the next line
-# populations = simulation_without_antibiotic(100, 1000, 0.1, 0.025, 50)
+#populations = simulation_without_antibiotic(100, 1000, 0.1, 0.025, 50)
 
 ##########################
 # PROBLEM 3
@@ -262,7 +358,15 @@ def calc_pop_std(populations, t):
         float: the standard deviation of populations across different trials at
              a specific time step
     """
-    pass  # TODO
+    # TODO
+
+    mean = calc_pop_avg(populations, t)
+
+    quad_deviation_inctance_population = list()
+    for trial in populations:
+        quad_deviation_inctance_population.append((trial[t]- mean)**2)
+
+    return math.sqrt(sum(quad_deviation_inctance_population)/float(len(populations)))
 
 
 def calc_95_ci(populations, t):
@@ -286,7 +390,10 @@ def calc_95_ci(populations, t):
 
         I.e., you should return a tuple containing (mean, width)
     """
-    pass  # TODO
+    # TODO
+    sem = calc_pop_std(populations, t) / float(math.sqrt(len(populations)))
+    return (calc_pop_avg(populations, t), 1.96 * sem)
+
 
 
 ##########################
@@ -306,11 +413,17 @@ class ResistantBacteria(SimpleBacteria):
                 bacteria cell. This is the maximum probability of the
                 offspring acquiring antibiotic resistance
         """
-        pass  # TODO
+        # TODO
+        self.birth_prob = birth_prob
+        self.death_prob = death_prob
+        self.resistant = resistant
+        self.mut_prob = mut_prob
+
 
     def get_resistant(self):
         """Returns whether the bacteria has antibiotic resistance"""
-        pass  # TODO
+        # TODO
+        return self.resistant
 
     def is_killed(self):
         """Stochastically determines whether this bacteria cell is killed in
@@ -324,7 +437,11 @@ class ResistantBacteria(SimpleBacteria):
             bool: True if the bacteria dies with the appropriate probability
                 and False otherwise.
         """
-        pass  # TODO
+          # TODO
+
+        if self.get_resistant():
+            return (random.random() <= self.death_prob)
+        else: return (random.random() <= self.death_prob / float(4))
 
     def reproduce(self, pop_density):
         """
@@ -355,7 +472,16 @@ class ResistantBacteria(SimpleBacteria):
             as this bacteria. Otherwise, raises a NoChildException if this
             bacteria cell does not reproduce.
         """
-        pass  # TODO
+        # TODO
+
+        if random.random() <= self.birth_prob * (1 - pop_density):
+            new_resistant = True
+            if not self.get_resistant():
+                if not random.random() <= self.mut_prob * (1 - pop_density):
+                    new_resistant = False
+            return ResistantBacteria(self.birth_prob, self.death_prob, new_resistant, self.mut_prob)
+
+
 
 
 class TreatedPatient(Patient):
@@ -378,14 +504,18 @@ class TreatedPatient(Patient):
         Don't forget to call Patient's __init__ method at the start of this
         method.
         """
-        pass  # TODO
+        # TODO
+        self.bacteria = bacteria
+        self.max_pop = max_pop
+        self.on_antibiotic = False
 
     def set_on_antibiotic(self):
         """
         Administer an antibiotic to this patient. The antibiotic acts on the
         bacteria population for all subsequent time steps.
         """
-        pass  # TODO
+        # TODO
+        self.on_antibiotic = True
 
     def get_resist_pop(self):
         """
@@ -394,7 +524,20 @@ class TreatedPatient(Patient):
         Returns:
             int: the number of bacteria with antibiotic resistance
         """
-        pass  # TODO
+        # TODO
+        return len(self.get_resist_bacteria())
+
+    def get_resist_bacteria(self):
+
+        resistant_bacteria = list(self.bacteria)
+        nonresistant_bacteria = list()
+        for bacterium in resistant_bacteria:
+            if not bacterium.get_resistant():
+                nonresistant_bacteria.append(bacterium)
+        for each in nonresistant_bacteria:
+            resistant_bacteria.remove(each)
+        return resistant_bacteria
+           
 
     def update(self):
         """
@@ -421,7 +564,30 @@ class TreatedPatient(Patient):
         Returns:
             int: The total bacteria population at the end of the update
         """
-        pass  # TODO
+        # TODO
+
+        #1
+        self.bacteria = self.get_survived_bacteria()
+        
+        #2
+        self.bacteria = self.get_resistant_survived_bacteria()
+
+        #3
+        pop_density = self.get_pop_density()
+
+        #4
+        child_bacteria = self.get_child_bacteria(pop_density)
+
+        #5
+        self.bacteria += child_bacteria
+
+        return len(self.bacteria)
+
+    def get_resistant_survived_bacteria(self):
+        if not self.on_antibiotic:
+            return self.bacteria
+        else:
+            return self.get_resist_bacteria()
 
 
 ##########################
@@ -472,8 +638,58 @@ def simulation_with_antibiotic(num_bacteria,
             resistant_pop[i][j] is the number of resistant bacteria for
             trial i at time step j
     """
-    pass  # TODO
+    # TODO
 
+    num_steps_0 = 150
+    num_steps_1 = 250
+
+    def create_bacteria():
+        bacteria = list()
+        for i in range(num_bacteria):
+            bacteria.append(ResistantBacteria(birth_prob, death_prob, resistant, mut_prob))
+        return bacteria
+
+    def run_trial():
+        """return list of population of each time-step"""
+        bacteria = create_bacteria()
+        patient = TreatedPatient(bacteria, max_pop)
+        population = list()
+        resistant_population = list()
+        for i in range(num_steps_0 + num_steps_1):
+            if i == num_steps_0:
+                patient.set_on_antibiotic()
+            population.append(patient.get_total_pop())
+            resistant_population.append(patient.get_resist_pop())
+            patient.update()
+        return [population, resistant_population]
+
+    populations = list()
+    resistant_populations = list()
+    for trial in range(num_trials):
+        result = run_trial()
+        populations.append(result[1])
+        resistant_populations.append(result[0])
+
+    #Plot
+    def get_x_coords():
+        x_coords = list()
+        for i in range(num_steps_0 + num_steps_1):
+            x_coords.append(i)
+        return x_coords
+
+    def get_y_coords():
+        y_coords_total = list()
+        y_coords_resistant = list()
+        
+        for i in range(num_steps_0 + num_steps_1):
+            y_coords_total.append(calc_pop_avg(populations, i))
+            y_coords_resistant.append(calc_pop_avg(resistant_populations, i))
+        return [y_coords_total, y_coords_resistant]
+
+    y = get_y_coords()
+    make_two_curve_plot(get_x_coords(), y[0], y[1],"Resistant Population", "Total population", "time-steps", "Population", "Population over time with an antibiotic")
+
+    return [populations, resistant_populations]
 
 # When you are ready to run the simulations, uncomment the next lines one
 # at a time
